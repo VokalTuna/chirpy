@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/VokalTuna/chirpy/internal/auth"
+	"github.com/VokalTuna/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
@@ -17,7 +19,8 @@ type User struct {
 
 func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Request) {
 	type parameters struct {
-		Email string `json:"email"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
 	}
 	type response struct {
 		User
@@ -30,7 +33,15 @@ func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	dbUser, err := cfg.db.CreateUser(req.Context(), param.Email)
+	hashedPassword, err := auth.HashPassword(param.Password)
+	if err != nil {
+		respondWithError(rw, http.StatusInternalServerError, "Couldn't hass password", err)
+	}
+
+	dbUser, err := cfg.db.CreateUser(req.Context(), database.CreateUserParams{
+		HashedPassword: hashedPassword,
+		Email:          param.Email,
+	})
 	if err != nil {
 		respondWithError(rw, http.StatusInternalServerError, "Couldn't create user", err)
 		return
