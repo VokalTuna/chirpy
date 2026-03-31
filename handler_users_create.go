@@ -15,6 +15,7 @@ type User struct {
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	Email     string    `json:"email"`
+	Password  string    `json:"-"`
 }
 
 func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Request) {
@@ -35,7 +36,8 @@ func (cfg *apiConfig) handlerCreateUser(rw http.ResponseWriter, req *http.Reques
 
 	hashedPassword, err := auth.HashPassword(param.Password)
 	if err != nil {
-		respondWithError(rw, http.StatusInternalServerError, "Couldn't hass password", err)
+		respondWithError(rw, http.StatusInternalServerError, "Couldn't hash password", err)
+		return
 	}
 
 	dbUser, err := cfg.db.CreateUser(req.Context(), database.CreateUserParams{

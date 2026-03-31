@@ -28,8 +28,8 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password", err)
 		return
 	}
-	ok, err := auth.CheckPasswordHash(param.Password, dbUser.HashedPassword)
-	if !ok || err != nil {
+	match, err := auth.CheckPasswordHash(param.Password, dbUser.HashedPassword)
+	if err != nil || !match {
 		respondWithError(w, http.StatusUnauthorized, "Incorrect email or password", err)
 		return
 	}
