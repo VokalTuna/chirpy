@@ -3,6 +3,8 @@ package auth
 import (
 	"errors"
 	"fmt"
+	"net/http"
+	"strings"
 	"time"
 
 	"github.com/alexedwards/argon2id"
@@ -72,4 +74,19 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 		return uuid.Nil, fmt.Errorf("invalid user ID: %w", err)
 	}
 	return user_id, nil
+}
+
+func GetBearerToken(header http.Header) (string, error) {
+	headerString := header.Get("Authorization")
+	if headerString == "" {
+		return "", errors.New("No token")
+	}
+	response := strings.Fields(headerString)
+	if response[0] != "Bearer" {
+		return "", errors.New("Not the same")
+	}
+	if len(response) < 2 {
+		return "", errors.New("No token")
+	}
+	return response[1], nil
 }

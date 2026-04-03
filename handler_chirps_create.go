@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/VokalTuna/chirpy/internal/auth"
 	"github.com/VokalTuna/chirpy/internal/database"
 	"github.com/google/uuid"
 )
@@ -26,9 +27,20 @@ func (cfg *apiConfig) handlerChirpsCreate(rw http.ResponseWriter, req *http.Requ
 		User_id uuid.UUID `json:"user_id"`
 	}
 
+	token, err := auth.GetBearerToken(req.Header)
+	if err != nil {
+		respondWithError(rw, http.StatusUnauthorized, "No valid token.", err)
+		return
+	}
+	userid, err := auth.ValidateJWT(token, cfg.secret)
+	if err != nil {
+		respondWithError(rw, http.StatusUnauthorized, "No valid token.", err)
+		return
+	}
+
 	decoder := json.NewDecoder(req.Body)
 	params := parameters{}
-	err := decoder.Decode(&params)
+	err = decoder.Decode(&params)
 	if err != nil {
 		respondWithError(rw, http.StatusInternalServerError, "Couldn't decode parameters", err)
 		return
@@ -51,7 +63,7 @@ func (cfg *apiConfig) handlerChirpsCreate(rw http.ResponseWriter, req *http.Requ
 		Created_at: chirp.CreatedAt,
 		Updated_at: chirp.UpdatedAt,
 		Body:       chirp.Body,
-		User_id:    chirp.UserID,
+		User_id:    userid,
 	})
 }
 
