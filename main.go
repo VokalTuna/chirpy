@@ -39,6 +39,9 @@ func main() {
 	dbQueries := database.New(dbConn)
 
 	secret := os.Getenv("SECRET")
+	if secret == "" {
+		log.Fatal("No SECRET environment variable is set")
+	}
 	apiCfg := &apiConfig{
 		fileserverHits: atomic.Int32{},
 		db:             dbQueries,

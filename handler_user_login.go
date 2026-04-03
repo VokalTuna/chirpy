@@ -16,7 +16,8 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 	}
 	type response struct {
 		User
-		Token string `json:"token"`
+		Token        string `json:"token"`
+		RefreshToken string `json:"refresh_token"`
 	}
 
 	decoder := json.NewDecoder(r.Body)
@@ -37,19 +38,16 @@ func (cfg *apiConfig) handlerUserLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	expiresInSeconds := 3600
+	expiresInSeconds := time.Hour
 
-	if param.ExpiresInSeconds > 0 {
-		expiresInSeconds = param.ExpiresInSeconds
+	if param.ExpiresInSeconds > 0 && param.ExpiresInSeconds < 3600 {
+		expiresInSeconds = time.Duration(param.ExpiresInSeconds) * time.Second
 	}
 
-	if expiresInSeconds > 3600 {
-		expiresInSeconds = 3600
-	}
-
-	token, err := auth.MakeJWT(dbUser.ID, cfg.secret, time.Duration(expiresInSeconds)*time.Second)
+	token, err := auth.MakeJWT(dbUser.ID, cfg.secret, expiresInSeconds)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't create token", err)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't create access JWT", err)
+		return
 	}
 
 	respondWithJSON(w, http.StatusOK, response{
