@@ -1,0 +1,55 @@
+package main
+
+import (
+	"encoding/json"
+	"net/http"
+
+	"github.com/VokalTuna/chirpy/internal/auth"
+	"github.com/VokalTuna/chirpy/internal/database"
+)
+
+func (cfg *apiConfig) handlerChangeUser(w http.ResponseWriter, r *http.Request) {
+	type Parameters struct {
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+	tokenString, err := auth.GetBearerToken(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Not a valid token.", err)
+	}
+	userID, err := auth.ValidateJWT(tokenString, cfg.secret)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Not a valid token.", err)
+		return
+	}
+	// Decode the request into:
+	param := Parameters{}
+	decoder := json.NewDecoder(r.Body)
+	err = decoder.Decode(&param)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't decode parameters", err)
+		return
+	}
+
+	hashedPassword, err := auth.HashPassword(param.Password)
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash", err)
+		return
+	}
+
+	dbUser, err := cfg.db.UpdateUser(r.Context(), database.UpdateUserParams{
+		ID:             userID,
+		HashedPassword: hashedPassword,
+		Email:          param.Email,
+	})
+	if err != nil {
+		respondWithError(w, http.StatusInternalServerError, "No change to user.", err)
+		return
+	}
+	respondWithJSON(w, http.StatusOK, User{
+		ID:        dbUser.ID,
+		CreatedAt: dbUser.CreatedAt,
+		UpdatedAt: dbUser.UpdatedAt,
+		Email:     dbUser.Email,
+	})
+}
