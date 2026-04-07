@@ -8,18 +8,21 @@ import (
 	"github.com/VokalTuna/chirpy/internal/database"
 )
 
-func (cfg *apiConfig) handlerChangeUser(w http.ResponseWriter, r *http.Request) {
+func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request) {
 	type Parameters struct {
 		Email    string `json:"email"`
 		Password string `json:"password"`
 	}
+	type response struct {
+		User
+	}
 	tokenString, err := auth.GetBearerToken(r.Header)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "Not a valid token.", err)
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find token.", err)
 	}
 	userID, err := auth.ValidateJWT(tokenString, cfg.secret)
 	if err != nil {
-		respondWithError(w, http.StatusUnauthorized, "Not a valid token.", err)
+		respondWithError(w, http.StatusUnauthorized, "Couldn't validate token.", err)
 		return
 	}
 	// Decode the request into:
@@ -33,7 +36,7 @@ func (cfg *apiConfig) handlerChangeUser(w http.ResponseWriter, r *http.Request) 
 
 	hashedPassword, err := auth.HashPassword(param.Password)
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "Couldn't hash", err)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't hash password", err)
 		return
 	}
 
@@ -43,13 +46,14 @@ func (cfg *apiConfig) handlerChangeUser(w http.ResponseWriter, r *http.Request) 
 		Email:          param.Email,
 	})
 	if err != nil {
-		respondWithError(w, http.StatusInternalServerError, "No change to user.", err)
+		respondWithError(w, http.StatusInternalServerError, "Couldn't update user.", err)
 		return
 	}
-	respondWithJSON(w, http.StatusOK, User{
-		ID:        dbUser.ID,
-		CreatedAt: dbUser.CreatedAt,
-		UpdatedAt: dbUser.UpdatedAt,
-		Email:     dbUser.Email,
-	})
+	respondWithJSON(w, http.StatusOK, response{
+		User: User{
+			ID:        dbUser.ID,
+			CreatedAt: dbUser.CreatedAt,
+			UpdatedAt: dbUser.UpdatedAt,
+			Email:     dbUser.Email,
+		}})
 }
