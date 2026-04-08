@@ -29,7 +29,7 @@ func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
 
 func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 	// Retrieves a singel chirp.
-	chirpsIdString := r.PathValue("ChirpID")
+	chirpsIdString := r.PathValue("chirpID")
 	chirpID, err := uuid.Parse(chirpsIdString)
 	if err != nil {
 		respondWithError(w, http.StatusBadRequest, "Invalid chirp ID", err)

@@ -21,7 +21,7 @@ func (cfg *apiConfig) handleRefresh(w http.ResponseWriter, r *http.Request) {
 		respondWithError(w, http.StatusUnauthorized, "No valid strings", err)
 		return
 	}
-	accessToken, err := auth.MakeJWT(dbUser.ID, cfg.secret, time.Hour)
+	accessToken, err := auth.MakeJWT(dbUser.ID, cfg.jwtSecret, time.Hour)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Not able to create access token,", err)
 		return

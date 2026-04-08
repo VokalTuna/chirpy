@@ -20,7 +20,7 @@ func (cfg *apiConfig) handlerUsersUpdate(w http.ResponseWriter, r *http.Request)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find token.", err)
 	}
-	userID, err := auth.ValidateJWT(tokenString, cfg.secret)
+	userID, err := auth.ValidateJWT(tokenString, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate token.", err)
 		return

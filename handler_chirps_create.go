@@ -31,7 +31,7 @@ func (cfg *apiConfig) handlerChirpsCreate(rw http.ResponseWriter, req *http.Requ
 		respondWithError(rw, http.StatusUnauthorized, "Couldn't find JWT.", err)
 		return
 	}
-	userID, err := auth.ValidateJWT(token, cfg.secret)
+	userID, err := auth.ValidateJWT(token, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(rw, http.StatusUnauthorized, "Couldn't validate JWT.", err)
 		return
