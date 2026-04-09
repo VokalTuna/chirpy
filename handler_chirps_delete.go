@@ -8,6 +8,14 @@ import (
 )
 
 func (cfg *apiConfig) handlerDeleteChirp(w http.ResponseWriter, r *http.Request) {
+	chirpIDString := r.PathValue("chirpID")
+	chirpID, err := uuid.Parse(chirpIDString)
+
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid chirp ID", err)
+		return
+	}
+
 	tokenString, err := auth.GetBearerToken(r.Header)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't find token.", err)
@@ -16,13 +24,6 @@ func (cfg *apiConfig) handlerDeleteChirp(w http.ResponseWriter, r *http.Request)
 	userID, err := auth.ValidateJWT(tokenString, cfg.jwtSecret)
 	if err != nil {
 		respondWithError(w, http.StatusUnauthorized, "Couldn't validate token.", err)
-		return
-	}
-	chirpIDString := r.PathValue("chirpID")
-	chirpID, err := uuid.Parse(chirpIDString)
-
-	if err != nil {
-		respondWithError(w, http.StatusBadRequest, "Invalid chirp ID", err)
 		return
 	}
 
