@@ -14,11 +14,11 @@ import (
 )
 
 type Chirp struct {
-	ID         uuid.UUID `json:"id"`
-	Created_at time.Time `json:"created_at"`
-	Updated_at time.Time `json:"updated_at"`
-	Body       string    `json:"body"`
-	User_id    uuid.UUID `json:"user_id"`
+	ID        uuid.UUID `json:"id"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Body      string    `json:"body"`
+	UserID    uuid.UUID `json:"user_id"`
 }
 
 func (cfg *apiConfig) handlerChirpsCreate(rw http.ResponseWriter, req *http.Request) {
@@ -58,11 +58,11 @@ func (cfg *apiConfig) handlerChirpsCreate(rw http.ResponseWriter, req *http.Requ
 	})
 
 	respondWithJSON(rw, http.StatusCreated, Chirp{
-		ID:         chirp.ID,
-		Created_at: chirp.CreatedAt,
-		Updated_at: chirp.UpdatedAt,
-		Body:       chirp.Body,
-		User_id:    chirp.UserID,
+		ID:        chirp.ID,
+		CreatedAt: chirp.CreatedAt,
+		UpdatedAt: chirp.UpdatedAt,
+		Body:      chirp.Body,
+		UserID:    chirp.UserID,
 	})
 }
 

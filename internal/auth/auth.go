@@ -82,19 +82,33 @@ func ValidateJWT(tokenString, tokenSecret string) (uuid.UUID, error) {
 }
 
 func GetBearerToken(header http.Header) (string, error) {
-	headerString := header.Get("Authorization")
-	if headerString == "" {
+	authHeader := header.Get("Authorization")
+	if authHeader == "" {
 		return "", ErrNoAuthHeaderIncluded
 	}
-	response := strings.Split(headerString, " ")
-	if response[0] != "Bearer" || len(response) < 2 {
+	splitAuth := strings.Split(authHeader, " ")
+	if splitAuth[0] != "Bearer" || len(splitAuth) < 2 {
 		return "", errors.New("malformed authorization header")
 	}
-	return response[1], nil
+	return splitAuth[1], nil
 }
 
+// The MakeRefreshToken creates a random 256 bit token
+// that is encoded in a hex decimal system.
 func MakeRefreshToken() string {
 	key := make([]byte, 32)
 	rand.Read(key)
 	return hex.EncodeToString(key)
+}
+
+func GetAPIKey(headers http.Header) (string, error) {
+	authHeader := headers.Get("Authorization")
+	if authHeader == "" {
+		return "", ErrNoAuthHeaderIncluded
+	}
+	splitAuth := strings.Split(authHeader, " ")
+	if splitAuth[0] != "ApiKey" || len(splitAuth) < 2 {
+		return "", errors.New("malformed authorization header")
+	}
+	return splitAuth[1], nil
 }

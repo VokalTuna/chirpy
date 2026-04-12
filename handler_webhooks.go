@@ -6,10 +6,21 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/VokalTuna/chirpy/internal/auth"
 	"github.com/google/uuid"
 )
 
 func (cfg *apiConfig) handlerWebhook(w http.ResponseWriter, r *http.Request) {
+
+	apiKey, err := auth.GetAPIKey(r.Header)
+	if err != nil {
+		respondWithError(w, http.StatusUnauthorized, "Couldn't find api key", err)
+	}
+	if apiKey != cfg.polkaKey {
+		respondWithError(w, http.StatusUnauthorized, "API key is invalid", err)
+		return
+	}
+
 	type Parameters struct {
 		Event string `json:"event"`
 		Data  struct {
@@ -19,7 +30,7 @@ func (cfg *apiConfig) handlerWebhook(w http.ResponseWriter, r *http.Request) {
 
 	decoder := json.NewDecoder(r.Body)
 	param := Parameters{}
-	err := decoder.Decode(&param)
+	err = decoder.Decode(&param)
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, "Not able to decode.", err)
 		return

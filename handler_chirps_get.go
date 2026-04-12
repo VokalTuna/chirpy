@@ -2,29 +2,64 @@ package main
 
 import (
 	"net/http"
+	"sort"
 
+	"github.com/VokalTuna/chirpy/internal/database"
 	"github.com/google/uuid"
 )
 
+func authorIDFromRequest(r *http.Request) (uuid.UUID, error) {
+	authorIDstring := r.URL.Query().Get("author_id")
+	if authorIDstring == "" {
+		return uuid.Nil, nil
+	}
+	authorID, err := uuid.Parse(authorIDstring)
+	if err != nil {
+		return uuid.Nil, nil
+	}
+	return authorID, nil
+}
+
+func isAscending(r *http.Request) bool {
+	sortOrder := r.URL.Query().Get("sort")
+	if sortOrder == "desc" {
+		return false
+	}
+	return true
+}
+
 func (cfg *apiConfig) handlerGetChirps(w http.ResponseWriter, r *http.Request) {
-	// Retrieve all chirps
-	dbChirps, err := cfg.db.GetAllChirps(r.Context())
+	authID, err := authorIDFromRequest(r)
+	if err != nil {
+		respondWithError(w, http.StatusBadRequest, "Invalid author ID", err)
+	}
+
+	var dbChirps []database.Chirp
+
+	if authID != uuid.Nil {
+		dbChirps, err = cfg.db.GetChirpsByUser(r.Context(), authID)
+	} else {
+		dbChirps, err = cfg.db.GetAllChirps(r.Context())
+	}
 	if err != nil {
 		respondWithError(w, http.StatusInternalServerError, err.Error(), err)
 		return
 	}
 
-	response := []Chirp{}
+	chirps := []Chirp{}
 	for _, dbChirp := range dbChirps {
-		response = append(response, Chirp{
-			ID:         dbChirp.ID,
-			Created_at: dbChirp.CreatedAt,
-			Updated_at: dbChirp.UpdatedAt,
-			Body:       dbChirp.Body,
-			User_id:    dbChirp.UserID,
+		chirps = append(chirps, Chirp{
+			ID:        dbChirp.ID,
+			CreatedAt: dbChirp.CreatedAt,
+			UpdatedAt: dbChirp.UpdatedAt,
+			Body:      dbChirp.Body,
+			UserID:    dbChirp.UserID,
 		})
 	}
-	respondWithJSON(w, http.StatusOK, response)
+	if !isAscending(r) {
+		sort.Slice(chirps, func(i, j int) bool { return chirps[i].CreatedAt.After(chirps[j].CreatedAt) })
+	}
+	respondWithJSON(w, http.StatusOK, chirps)
 }
 
 func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
@@ -41,10 +76,10 @@ func (cfg *apiConfig) handlerGetChirp(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	respondWithJSON(w, http.StatusOK, Chirp{
-		ID:         dbChirp.ID,
-		Created_at: dbChirp.CreatedAt,
-		Updated_at: dbChirp.UpdatedAt,
-		Body:       dbChirp.Body,
-		User_id:    dbChirp.UserID,
+		ID:        dbChirp.ID,
+		CreatedAt: dbChirp.CreatedAt,
+		UpdatedAt: dbChirp.UpdatedAt,
+		Body:      dbChirp.Body,
+		UserID:    dbChirp.UserID,
 	})
 }
